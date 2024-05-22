@@ -1,23 +1,23 @@
 # Logo del sistema
 $systemLogo = @"
-                                ....iilll
-                 ....iilllllllllllll
-     ....iillll  lllllllllllllllllll
- iillllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- 
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- llllllllllllll  lllllllllllllllllll
- `^^^^^^lllllll  lllllllllllllllllll
-       ````^^^^  ^^lllllllllllllllll
-                      ````^^^^^^llll                
+                                                        ....iilll
+                                            ....iilllllllllllll
+                                ....iillll  lllllllllllllllllll
+                            iillllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            llllllllllllll  lllllllllllllllllll
+                            `^^^^^^lllllll  lllllllllllllllllll
+                                ````^^^^  ^^lllllllllllllllll
+                                                ````^^^^^^llll                
 "@
 
 # Colores
@@ -25,13 +25,16 @@ $foregroundColor = "cyan"
 $highlightColor = "Green"
 $errorColor = "Red"
 
+$computer = Get-ComputerInfo
+
 # Obtener información del sistema
-$device = (Get-ComputerInfo).CsSystemFamily 
-$os = (Get-ComputerInfo).OsName
-$kernel = (Get-ComputerInfo).OsVersion
-$processor = (Get-ComputerInfo).CsProcessors
-$logicalprocessors = (Get-ComputerInfo).CsNumberOfLogicalProcessors
+$device = $computer.CsSystemFamily 
+$os = $computer.OsName
+$kernel = $computer.OsVersion
+$processor = $computer.CsProcessors
+$logicalprocessors = $computer.CsNumberOfLogicalProcessors
 $memory = Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
+$hofixes = $computer.OsHotFixes
 
 # Obtener la resolución del monitor
 $monitors = Get-CimInstance -Namespace "root/CIMV2" -Class Win32_VideoController
@@ -40,22 +43,22 @@ foreach ($resolution in $resolutions) {
 }
 
 # Obtener la versión de Windows
-$windowsVersion = (Get-ComputerInfo).WindowsCurrentVersion
+$windowsVersion = $computer.WindowsCurrentVersion
 
 # Obtiene el numero de serie
-$serialnumber = (Get-ComputerInfo).OsSerialNumber
+$serialnumber = $computer.OsSerialNumber
 
 # Obtiene el usuario asociado
-$asociateuser = (Get-ComputerInfo).WindowsRegisteredOwner
+$asociateuser = $computer.WindowsRegisteredOwner
 
 # Obtiene el nombre de la bios
-$biosversion = (Get-ComputerInfo).BiosVersion
+$biosversion = $computer.BiosVersion
 
 # Obtiene la provedora de la bios
-$biosmanufacture = (Get-ComputerInfo).BiosManufacturer
+$biosmanufacture = $computer.BiosManufacturer
 
 # Obtiene el tipo de bios
-$biostipe = (Get-ComputerInfo).BiosFirmwareType
+$biostipe = $computer.BiosFirmwareType
 
 # Obtener información del sistema de archivos
 $diskUsage = Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } | Select-Object -Property DeviceID, FreeSpace, Size
@@ -99,7 +102,7 @@ $batteryInfo = if ($battery) {
 }
 
 # Obtener información adicional del sistema operativo
-$osArchitecture = (Get-ComputerInfo).CsSystemType
+$osArchitecture = $computer.CsSystemType
 
 # Obtener información del entorno de desarrollo
 # Aquí deberías obtener la información relevante sobre el entorno de desarrollo, como el IDE utilizado, la versión del compilador, etc.
@@ -128,8 +131,8 @@ $graphicMemory = $graphic.AdapterRAM / 1GB  # Convertir de bytes a gigabytes
 
 # Friewall status
 $firewall = Get-NetFirewallProfile
-$firewallname1 = (Get-NetFirewallProfile).Name | Select-Object -First 1
-$firewallstatusinfo = (Get-NetFirewallProfile).Enabled | Select-Object -First 1
+$firewallname1 = $firewall.Name | Select-Object -First 1
+$firewallstatusinfo = $firewall.Enabled | Select-Object -First 1
 
 # Antivirus info
 $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct
