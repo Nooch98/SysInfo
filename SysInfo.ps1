@@ -34,7 +34,7 @@ $kernel = $computer.OsVersion
 $processor = $computer.CsProcessors
 $logicalprocessors = $computer.CsNumberOfLogicalProcessors
 $memory = Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
-$hofixes = $computer.OsHotFixes
+
 
 # Obtener la resolución del monitor
 $monitors = Get-CimInstance -Namespace "root/CIMV2" -Class Win32_VideoController
@@ -151,7 +151,7 @@ Write-Host ("{0,-16} : {1}" -f 'Operating System', $os) -ForegroundColor $foregr
 Write-Host ("{0,-16} : {1}" -f 'Kernel', $kernel) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Windows Build', $windowsVersion) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'OS Architecture', $osArchitecture) -ForegroundColor $foregroundColor
-Write-Host ("{0,-16} : {1}" -f 'Security Patch', $recentPatch.HotFixID) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'Security Patch', $recentPatch.HotFixID + ', Date ' + $recentPatch.InstalledOn) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Serial Number', $serialnumber) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Associate User', $asociateuser) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Bios Manufacture', $biosmanufacture) -ForegroundColor $foregroundColor
