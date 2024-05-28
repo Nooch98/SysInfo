@@ -116,6 +116,11 @@ if ($Host.Name -eq "ConsoleHost") {
 
 
 # Obtener información sobre la utilización de la CPU
+$cpu = Get-WmiObject -Class Win32_Processor
+$cpu | ForEach-Object {
+    $name = $_.Name
+    $maxClockSpeedGHz = [math]::round($cpu.MaxClockSpeed / 1000, 1)
+}
 $cpuLoad = Get-WmiObject Win32_Processor | Measure-Object -Property LoadPercentage -Average
 $cpuUsage = $cpuLoad.Average
 
@@ -159,10 +164,10 @@ Write-Host ("{0,-16} : {1}" -f 'Bios version', $biosversion) -ForegroundColor $f
 Write-Host ("{0,-16} : {1}" -f 'Bios Type', $biostipe) -ForegroundColor $foregroundColor
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
-Write-Host "-------------------------------------HARDWARE-----------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host ("{0,-16} : {1}" -f 'CPU', $processor.Name) -ForegroundColor $foregroundColor
+Write-Host "--------------------------------------HARDWARE-----------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host ("{0,-16} : {1}" -f 'CPU', "$name $maxClockSpeedGHz GHz") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
-Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1} GB" -f 'Memory', $graphicMemory) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU', $graphiccard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $graphicMemory + 'GB') -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Drivers', $graphicversion) -ForegroundColor $foregroundColor
@@ -171,7 +176,7 @@ Write-Host ("{0,-16} : {1}" -f 'Battery Info', $batteryInfo) -ForegroundColor $f
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
 # Mostrar la información adicional
-Write-Host "-------------------------------------ADITIONAL INFO-----------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host "-------------------------------------ADITIONAL INFO------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-26} : {1}" -f 'Development Environment', $developmentEnvironment, $currentTerminal) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1} GB (Free: {2} GB, Used: {3} GB, Free: {4}%, Used: {5}%)" -f ('Disk ' + $disk.DeviceID), $diskTotalSpaceGB, $diskFreeSpaceGB, $diskUsedSpaceGB, $diskFreePercentage, $diskUsedPercentage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'ISP', $isp) -ForegroundColor $foregroundColor
@@ -181,11 +186,11 @@ Write-Host ("{0,-26} : {1}" -f 'Location', $location) -ForegroundColor $foregrou
 Write-Host ("{0,-26} : {1}" -f 'Hostname', $hostname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Adapter Status', $adapterConnectionStatus) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'WiFi Info', $wifiInfo) -ForegroundColor $foregroundColor
-Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
-Write-Host "-------------------------------------SECURITY INFO-----------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host "-------------------------------------SECURITY INFO--------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-26} : {1}" -f 'Firewall', $firewallname1) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Status', $firewallstatusinfo) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Antivirus', $antivirusname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Status', $antivirusstate) -ForegroundColor $foregroundColor
-Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
