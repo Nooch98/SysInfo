@@ -131,7 +131,11 @@ $recentPatch = $securityPatches | Sort-Object -Property InstalledOn -Descending 
 # Obtiene Nombre de la tarjeta grafica
 $graphic = Get-CimInstance -Namespace "root/CIMV2" -ClassName Win32_VideoController
 $graphiccard = $graphic.Name
-$graphicversion = $graphic.DriverVersion
+$graphicversion = if ($graphic.Name -Like "*NVIDIA*") {
+    (nvidia-smi --version) | FINDSTR "DRIVER Version" | Select-Object -First 1
+} else {
+    $graphic.DriverVersion
+}
 $graphicMemory = $graphic.AdapterRAM / 1GB  # Convertir de bytes a gigabytes
 
 # Friewall status
@@ -170,7 +174,7 @@ Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregr
 Write-Host ("{0,-16} : {1} GB" -f 'Memory', $graphicMemory) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU', $graphiccard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $graphicMemory + 'GB') -ForegroundColor $foregroundColor
-Write-Host ("{0,-16} : {1}" -f 'Drivers', $graphicversion) -ForegroundColor $foregroundColor
+Write-Host $graphicversion -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Resolution', $resolution) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Battery Info', $batteryInfo) -ForegroundColor $foregroundColor
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
