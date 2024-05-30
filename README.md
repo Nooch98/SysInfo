@@ -8,6 +8,7 @@ SysInfo is a Powershell script that provides information about software, hardwar
 * I corrected how the information about the dedicated memory of the graphics card is obtained and now it is displayed correctly
 * Change how you get the version of the graphics drivers if it is Nvidia
 * Processor speed was also added as information
+* Added an autoupdate for the script
 
 ## 22/05/2024
 * small parts of the code have been changed to avoid repetition and optimize performance, it is now much faster
