@@ -1,6 +1,6 @@
 $archivoLocal = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
 $archivoRemoto = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
-$url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
+$url = "https://github.com/Nooch98/SysInfo/blob/main/SysInfo.ps1"
 
 Invoke-RestMethod -Uri $url -OutFile $archivoRemoto
 $hashLocal = Get-FileHash -Path $archivoLocal -Algorithm SHA256 | Select-Object -ExpandProperty Hash
