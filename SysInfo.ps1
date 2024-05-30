@@ -8,6 +8,7 @@ $hashremoto = Invoke-RestMethod -Uri $url -OutFile SysInfo_temp.ps1 | Get-FileHa
 
 if ($hashLocal -eq $hashremoto) {
     Write-Host "You have last Update Install..." -ForegroundColor Green
+    Remove-Item Sysinfo_temp.ps1
 } else {
     Write-Host "Installing last update..." -ForegroundColor Magenta
     Remove-Item $archivoLocal
