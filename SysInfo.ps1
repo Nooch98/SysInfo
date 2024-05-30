@@ -1,19 +1,18 @@
-$archivolocal = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
-$archivoremoto = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
+$archivoLocal = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
+$archivoRemoto = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
 $url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
 
+Invoke-RestMethod -Uri $url -OutFile $archivoRemoto
 $hashLocal = Get-FileHash -Path $archivoLocal -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-
-$hashremoto = Invoke-RestMethod -Uri $url -OutFile SysInfo_temp.ps1 | Get-FileHash -Path $archivoremoto -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-
-if ($hashLocal -eq $hashremoto) {
-    Write-Host "You have last Update Install..." -ForegroundColor Green
-    Remove-Item Sysinfo_temp.ps1
+$hashRemoto = Get-FileHash -Path $archivoRemoto -Algorithm SHA256 | Select-Object -ExpandProperty Hash
+if ($hashLocal -eq $hashRemoto) {
+    Write-Host "You have the latest update installed..." -ForegroundColor Green
+    Remove-Item $archivoRemoto
 } else {
-    Write-Host "Installing last update..." -ForegroundColor Magenta
+    Write-Host "Installing the latest update..." -ForegroundColor Magenta
     Remove-Item $archivoLocal
-    Move-Item Sysinfo_temp.ps1 SysInfo.ps1
-    Write-Host "You have last Update Install..." -ForegroundColor Green
+    Move-Item $archivoRemoto $archivoLocal
+    Write-Host "You have the latest update installed..." -ForegroundColor Green
 }
 
 # Logo del sistema
