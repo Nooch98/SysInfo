@@ -25,6 +25,8 @@ $foregroundColor = "cyan"
 $highlightColor = "Green"
 $errorColor = "Red"
 
+Write-Host -NoNewline ("`e]9;4;3;50`a")
+
 $computer = Get-ComputerInfo
 
 # Obtener información del sistema
@@ -129,14 +131,70 @@ $securityPatches = Get-HotFix | Where-Object { $_.Description -eq "Security Upda
 $recentPatch = $securityPatches | Sort-Object -Property InstalledOn -Descending | Select-Object -First 1
 
 # Obtiene Nombre de la tarjeta grafica
+Write-Host "Fetching GPU information, this may take few seconds..." -ForegroundColor $highlightColor
 $graphic = Get-CimInstance -Namespace "root/CIMV2" -ClassName Win32_VideoController
 $graphiccard = $graphic.Name
-$graphicversion = if ($graphic.Name -Like "*NVIDIA*") {
-    (nvidia-smi --version) | FINDSTR "DRIVER Version" | Select-Object -First 1
+if ($graphic.Name -Like "*NVIDIA*") {
+    $nvidiaVersionOutput = (nvidia-smi --version) | FINDSTR "DRIVER Version" | Select-Object -First 1
+    $graphicversion = $nvidiaVersionOutput -replace "DRIVER version\s+:\s+", ""
 } else {
-    $graphic.DriverVersion
+    $graphicversion = $graphic.DriverVersion
 }
-$graphicMemory = $graphic.AdapterRAM / 1GB  # Convertir de bytes a gigabytes
+# Ejecutar dxdiag y guardar la salida en un archivo temporal
+$dxdiagOutputFile = "dxdiag_output.txt"
+dxdiag /t $dxdiagOutputFile
+
+# Esperar a que el archivo se cree y se complete
+$maxWaitTime = 60 # Segundos
+$waitTime = 0
+$fileCreated = $false
+
+while (-not (Test-Path $dxdiagOutputFile) -and $waitTime -lt $maxWaitTime) {
+    Start-Sleep -Seconds 1
+    $waitTime++
+}
+
+$memoryValueGB = 0
+if (Test-Path $dxdiagOutputFile) {
+    # Verificar si el archivo ha terminado de escribirse comprobando el tamaño
+    $lastSize = (Get-Item $dxdiagOutputFile).length
+    while ($true) {
+        Start-Sleep -Seconds 1
+        $newSize = (Get-Item $dxdiagOutputFile).length
+        if ($newSize -eq $lastSize) {
+            break
+        }
+        $lastSize = $newSize
+    }
+
+    # Leer el archivo y buscar la primera línea que contiene "Dedicated Memory"
+    $dedicatedMemoryLines = Select-String -Path $dxdiagOutputFile -Pattern "Dedicated Memory"
+
+    if ($dedicatedMemoryLines.Count -gt 0) {
+        # Seleccionar la primera línea
+        $dedicatedMemoryLine = $dedicatedMemoryLines[0].Line
+        
+        # Extraer el valor de memoria dedicada utilizando una expresión regular
+        $memoryValueMatch = [regex]::Match($dedicatedMemoryLine, '(\d+)')
+        
+        if ($memoryValueMatch.Success) {
+            $memoryValueMB = [int]$memoryValueMatch.Value  # Convertir a entero
+
+            # Convertir de MB a GB
+            $memoryValueGB = [math]::Round($memoryValueMB / 1024, 2)  # Redondear a 2 decimales
+
+        } else {
+            Write-Host "The value of dedicated memory could not be extracted from the line: $dedicatedMemoryLine." -ForegroundColor $errorColor
+        }
+    } else {
+        Write-Host "The 'Dedicated Memory' line was not found in the dxdiag file." -ForegroundColor $errorColor
+    }
+
+    # Eliminar el archivo temporal
+    Remove-Item $dxdiagOutputFile
+} else {
+    Write-Host "The dxdiag file was not created within the expected time." -ForegroundColor $errorColor
+}
 
 # Friewall status
 $firewall = Get-NetFirewallProfile
@@ -147,6 +205,9 @@ $firewallstatusinfo = $firewall.Enabled | Select-Object -First 1
 $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct
 $antivirusname = $antivirus.displayName
 $antivirusstate = $antivirus.productState
+
+Write-Host -NoNewline ("`e]9;4;0;50`a")
+Clear-Host
 
 # Mostrar la información con los logos
 Write-Host @"
@@ -171,10 +232,10 @@ Write-Host "--------------------------------------------------------------------
 Write-Host "--------------------------------------HARDWARE-----------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-16} : {1}" -f 'CPU', "$name $maxClockSpeedGHz GHz") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
-Write-Host ("{0,-16} : {1} GB" -f 'Memory', $graphicMemory) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU', $graphiccard) -ForegroundColor $foregroundColor
-Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $graphicMemory + 'GB') -ForegroundColor $foregroundColor
-Write-Host $graphicversion -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $memoryValueGB + ' GB') -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'Drivers Version', $graphicversion) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Resolution', $resolution) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Battery Info', $batteryInfo) -ForegroundColor $foregroundColor
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
