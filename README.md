@@ -10,7 +10,7 @@ SysInfo is a Powershell script that provides information about software, hardwar
 * Processor speed was also added as information
 * Added an autoupdate for the script [!] If you do not have the script saved in the path C:\Users\USER\Documents\PowerShell\Scripts you only need to change these two lines in the code for it to work correctly
 
-![Captura de pantalla 2024-05-30 195237](https://github.com/Nooch98/SysInfo/assets/73700510/2814d364-9b0a-4f92-b663-a35ca49bbf63)
+![Captura de pantalla 2024-05-30 200836](https://github.com/Nooch98/SysInfo/assets/73700510/243f0ccc-8067-4955-b676-359028388c88)
 
 ## 22/05/2024
 * small parts of the code have been changed to avoid repetition and optimize performance, it is now much faster
