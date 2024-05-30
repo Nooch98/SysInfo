@@ -53,6 +53,7 @@ $kernel = $computer.OsVersion
 $processor = $computer.CsProcessors
 $logicalprocessors = $computer.CsNumberOfLogicalProcessors
 $memory = Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
+$motherboard = (Get-WmiObject Win32_BaseBoard).Product
 
 
 # Obtener la resolución del monitor
@@ -247,6 +248,7 @@ Write-Host ("{0,-16} : {1}" -f 'Bios Type', $biostipe) -ForegroundColor $foregro
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
 Write-Host "--------------------------------------HARDWARE-----------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host ("{0,-16} : {1}%" -f 'Motherboard', $motherboard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'CPU', "$name($logicalprocessors CPUs)~$maxClockSpeedGHz GHz") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
