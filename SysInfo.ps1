@@ -1,4 +1,3 @@
-# LastModified: 29/05/2024
 # Logo del sistema
 $systemLogo = @"
                                                         ....iilll
