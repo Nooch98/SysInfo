@@ -122,7 +122,7 @@ $batteryInfo = if ($battery) {
 }
 
 # Obtener información adicional del sistema operativo
-$osArchitecture = $computer.CsSystemType
+$osArchitecture = $computer.OsArchitecture
 
 # Obtener información del entorno de desarrollo
 # Aquí deberías obtener la información relevante sobre el entorno de desarrollo, como el IDE utilizado, la versión del compilador, etc.
