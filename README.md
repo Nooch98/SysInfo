@@ -1,8 +1,6 @@
 # SysInfo
 SysInfo is a Powershell script that provides information about software, hardware, security and additional information similar to neofetch but created with Windows in mind since neofetch has been discontinued
 
-![Captura de pantalla 2024-05-30 180355](https://github.com/Nooch98/SysInfo/assets/73700510/a58afac6-1bf0-4e34-8aa3-ce06edfea1b5)
-
 # UPDATES
 ## 30/05/2024
 * I corrected how the information about the dedicated memory of the graphics card is obtained and now it is displayed correctly
