@@ -1,3 +1,20 @@
+$archivolocal = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
+$archivoremoto = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
+$url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
+
+$hashLocal = Get-FileHash -Path $archivoLocal -Algorithm SHA256 | Select-Object -ExpandProperty Hash
+
+$hashremoto = Invoke-RestMethod -Uri $url -OutFile SysInfo_temp.ps1 | Get-FileHash -Path $archivoremoto -Algorithm SHA256 | Select-Object -ExpandProperty Hash
+
+if ($hashLocal -eq $hashremoto) {
+    Write-Host "You have last Update Install..." -ForegroundColor Green
+} else {
+    Write-Host "Installing last update..." -ForegroundColor Magenta
+    Remove-Item $archivoLocal
+    Move-Item Sysinfo_temp.ps1 SysInfo.ps1
+    Write-Host "You have last Update Install..." -ForegroundColor Green
+}
+
 # Logo del sistema
 $systemLogo = @"
                                                         ....iilll
