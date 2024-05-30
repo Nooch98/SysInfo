@@ -63,7 +63,7 @@ $biosmanufacture = $computer.BiosManufacturer
 $biostipe = $computer.BiosFirmwareType
 
 # Obtener información del sistema de archivos
-$diskUsage = Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } | Select-Object -Property DeviceID, FreeSpace, Size
+$diskUsage = Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DeviceID -eq "C:" } |  Select-Object -Property DeviceID, FreeSpace, Size
 foreach ($disk in $diskUsage) {
     $diskFreeSpaceGB = [math]::Round($disk.FreeSpace / 1GB, 2)
     $diskUsedSpaceGB = [math]::Round(($disk.Size - $disk.FreeSpace) / 1GB, 2)
