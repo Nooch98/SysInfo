@@ -5,7 +5,7 @@ $url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
 Invoke-RestMethod -Uri $url -OutFile $archivoRemoto
 $hashLocal = Get-FileHash -Path $archivoLocal -Algorithm SHA256 | Select-Object -ExpandProperty Hash
 $hashRemoto = Get-FileHash -Path $archivoRemoto -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-if ($hashLocal -eq $hashRemoto) {
+if ($hashLocal -ne $hashRemoto) {
     Write-Host "You have the latest update installed..." -ForegroundColor Green
     Remove-Item $archivoRemoto
 } else {
