@@ -248,7 +248,7 @@ Write-Host ("{0,-16} : {1}" -f 'Bios Type', $biostipe) -ForegroundColor $foregro
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
 Write-Host "--------------------------------------HARDWARE-----------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host ("{0,-16} : {1}%" -f 'Motherboard', $motherboard) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'Motherboard', $motherboard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'CPU', "$name($logicalprocessors CPUs)~$maxClockSpeedGHz GHz") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
