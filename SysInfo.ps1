@@ -1,6 +1,6 @@
 $archivoLocal = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
 $archivoRemoto = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
-$url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
+$url = "https://github.com/Nooch98/SysInfo/blob/main/SysInfo.ps1"
 
 Invoke-RestMethod -Uri $url -OutFile $archivoRemoto
 $hashLocal = Get-FileHash -Path $archivoLocal -Algorithm SHA256 | Select-Object -ExpandProperty Hash
@@ -54,6 +54,11 @@ $processor = $computer.CsProcessors
 $logicalprocessors = $computer.CsNumberOfLogicalProcessors
 $memory = Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
 $motherboard = (Get-WmiObject Win32_BaseBoard).Product
+$updatestatus = Get-Service -Name wuauserv | Select-Object -ExpandProperty Status
+
+# System Uptime
+$uptime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+$uptimeFormatted = [System.DateTime]::Now - $uptime
 
 
 # Obtener la resolución del monitor
@@ -98,7 +103,9 @@ $isp = $ipAddress.org
 $location = $ipAddress.city
 $macAddress = $network.MACAddress[0]
 $hostname = $env:COMPUTERNAME
-$adapterConnectionStatus = if ($networkAdapter.NetConnectionStatus) { "Connected" } else { "Disconnected" }
+$networkAdapters = Get-NetAdapter | Select-Object Name, Status, LinkSpeed
+foreach ($adapter in $networkAdapters) {
+}
 
 # Obtener información de la red WiFi
 $wifi = Get-NetConnectionProfile
@@ -222,7 +229,7 @@ $firewallstatusinfo = $firewall.Enabled | Select-Object -First 1
 # Antivirus info
 $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct
 $antivirusname = $antivirus.displayName
-$antivirusstate = $antivirus.productState
+$antivirusstate = Get-Service -Name WinDefend | Select-Object -ExpandProperty Status
 
 Write-Host -NoNewline ("`e]9;4;0;50`a")
 Clear-Host
@@ -240,6 +247,8 @@ Write-Host ("{0,-16} : {1}" -f 'Kernel', $kernel) -ForegroundColor $foregroundCo
 Write-Host ("{0,-16} : {1}" -f 'Windows Build', $windowsVersion) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'OS Architecture', $osArchitecture) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Security Patch', $recentPatch.HotFixID + ', Date ' + $recentPatch.InstalledOn) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'Windows Update', $updatestatus) -ForegroundColor $foregroundColor
+Write-Host ("System Uptime: {0} days {1} hours {2} minutes" -f $uptimeFormatted.Days, $uptimeFormatted.Hours, $uptimeFormatted.Minutes) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Serial Number', $serialnumber) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Associate User', $asociateuser) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Bios Manufacture', $biosmanufacture) -ForegroundColor $foregroundColor
@@ -268,7 +277,7 @@ Write-Host ("{0,-26} : {1}" -f 'Pubilc IP Address', $ipAddres) -ForegroundColor 
 Write-Host ("{0,-26} : {1}" -f 'MAC Address', $macAddress) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Location', $location) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Hostname', $hostname) -ForegroundColor $foregroundColor
-Write-Host ("{0,-26} : {1}" -f 'Adapter Status', $adapterConnectionStatus) -ForegroundColor $foregroundColor
+Write-Host ("{0,-26} : Adapter: {0}, Status: {1}, Speed: {2}" -f $adapter.Name, $adapter.Status, $adapter.LinkSpeed) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'WiFi Info', $wifiInfo) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
