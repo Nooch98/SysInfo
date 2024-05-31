@@ -285,6 +285,7 @@ $reportContent = @"
 </body>
 </html>
 "@
+Set-Content -Path $reportPath -Value $reportContent
 
 Write-Host -NoNewline ("`e]9;4;0;50`a")
 Clear-Host
