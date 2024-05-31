@@ -248,7 +248,7 @@ Write-Host ("{0,-16} : {1}" -f 'Windows Build', $windowsVersion) -ForegroundColo
 Write-Host ("{0,-16} : {1}" -f 'OS Architecture', $osArchitecture) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Security Patch', $recentPatch.HotFixID + ', Date ' + $recentPatch.InstalledOn) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Windows Update', $updatestatus) -ForegroundColor $foregroundColor
-Write-Host ("Uptime  : System Uptime: {0} days {1} hours {2} minutes" -f $uptimeFormatted.Days, $uptimeFormatted.Hours, $uptimeFormatted.Minutes) -ForegroundColor $foregroundColor
+Write-Host ("{Uptime,-16}  : System Uptime: {0} days {1} hours {2} minutes" -f $uptimeFormatted.Days, $uptimeFormatted.Hours, $uptimeFormatted.Minutes) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Serial Number', $serialnumber) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Associate User', $asociateuser) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Bios Manufacture', $biosmanufacture) -ForegroundColor $foregroundColor
@@ -277,7 +277,7 @@ Write-Host ("{0,-26} : {1}" -f 'Pubilc IP Address', $ipAddres) -ForegroundColor 
 Write-Host ("{0,-26} : {1}" -f 'MAC Address', $macAddress) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Location', $location) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Hostname', $hostname) -ForegroundColor $foregroundColor
-Write-Host ("Adapter : Adapter: {0}, Status: {1}, Speed: {2}" -f $adapter.Name, $adapter.Status, $adapter.LinkSpeed) -ForegroundColor $foregroundColor
+Write-Host ("{Adapter,-26} : Adapter: {0}, Status: {1}, Speed: {2}" -f $adapter.Name, $adapter.Status, $adapter.LinkSpeed) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'WiFi Info', $wifiInfo) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
