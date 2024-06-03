@@ -13,6 +13,7 @@ if ($hashLocal -eq $hashRemoto) {
     Remove-Item $archivoLocal
     Move-Item $archivoRemoto $archivoLocal
     Write-Host "You have the latest update installed..." -ForegroundColor Green
+    & $archivoLocal
 }
 
 # Logo del sistema
