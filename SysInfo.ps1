@@ -61,6 +61,19 @@ $updatestatus = Get-Service -Name wuauserv | Select-Object -ExpandProperty Statu
 $uptime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
 $uptimeFormatted = [System.DateTime]::Now - $uptime
 
+# PowerShell Update Check
+$updateNeeded = $false
+$currentversion = $PSVersionTable.PSVersion.ToString()
+$gitHubApiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
+$latestReleaseinfo = Invoke-RestMethod -Uri $gitHubApiUrl
+$latestversion = $latestReleaseinfo.tag_name.Trim('v')
+if ($currentversion -lt $latestversion) {
+    $updateNeeded = $true
+}
+
+$powershellupdate = if ($updateNeeded) {
+    Write-Host "(UPDATE TO {$latestversion})"
+}
 
 # Obtener la resolución del monitor
 $monitors = Get-CimInstance -Namespace "root/CIMV2" -Class Win32_VideoController
@@ -328,6 +341,7 @@ Write-Host "--------------------------------------------------------------------
 # Mostrar la información adicional
 Write-Host "-------------------------------------ADITIONAL INFO------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-26} : {1}" -f 'Development Environment', $developmentEnvironment, $currentTerminal) -ForegroundColor $foregroundColor
+Write-Host ("{0,-26} : {1}" -f 'PowerShell Update', $currentversion + $powershellupdate) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1} GB (Free: {2} GB, Used: {3} GB, Free: {4}%, Used: {5}%)" -f ('Disk ' + $disk.DeviceID), $diskTotalSpaceGB, $diskFreeSpaceGB, $diskUsedSpaceGB, $diskFreePercentage, $diskUsedPercentage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'ISP', $isp) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Pubilc IP Address', $ipAddres) -ForegroundColor $foregroundColor
