@@ -31,7 +31,7 @@ if ($updateSession.Count -eq 0) {
 } else {
     Write-Host "Pending updates:" -ForegroundColor $highlightColor
     foreach ($update in $updateSession) {
-        Write-Host $update.KB -ForegroundColor $foregroundColor
+        Write-Host $update.Title -ForegroundColor $foregroundColor
         $quest = Read-Host "You Want Install the updates"
         if ($quest -eq "y" -or "yes") {
             Get-WindowsUpdate -KBArticle $update.KB -Install -AcceptAll
