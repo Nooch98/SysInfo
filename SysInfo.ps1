@@ -18,7 +18,7 @@ if ($hashLocal -eq $hashRemoto) {
 
 # Logo del sistema
 $systemLogo = @"
-                                                        ....iilll
+                                                      ....iilll
                                             ....iilllllllllllll
                                 ....iillll  lllllllllllllllllll
                             iillllllllllll  lllllllllllllllllll
@@ -33,9 +33,9 @@ $systemLogo = @"
                             llllllllllllll  lllllllllllllllllll
                             llllllllllllll  lllllllllllllllllll
                             llllllllllllll  lllllllllllllllllll
-                            `^^^^^^lllllll  lllllllllllllllllll
-                                ````^^^^  ^^lllllllllllllllll
-                                                ````^^^^^^llll                
+                             `^^^^^^lllllll  lllllllllllllllllll
+                                    ````^^^^  ^^lllllllllllllllll
+                                                   ````^^^^^^llll                
 "@
 
 # Colores
@@ -245,69 +245,13 @@ $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVi
 $antivirusname = $antivirus.displayName
 $antivirusstate = Get-Service -Name WinDefend | Select-Object -ExpandProperty Status
 
-$reportPath = "$env:USERPROFILE\Documents\SystemInfoReport.html"
-$reportContent = @"
-<html>
-<head>
-    <title>System Information Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #f2f2f2; }
-    </style>
-</head>
-<body>
-    <h1>System Information Report</h1>
-    <h2>Software Information</h2>
-    <p>Device: $device</p>
-    <p>Operating System: $os</p>
-    <p>Kernel: $kernel</p>
-    <p>Windows Build: $windowsVersion</p>
-    <p>OS Architecture: $osArchitecture</p>
-    <p>Security Patch: $recentPatch.HotFixID, Date: $recentPatch.InstalledOn</p>
-    <p>Serial Number: $serialnumber</p>
-    <p>Associate User: $asociateuser</p>
-    <p>Bios Manufacture: $biosmanufacture</p>
-    <p>Bios Version: $biosversion</p>
-    <p>Bios Type: $biostipe</p>
-    <h2>Hardware Information</h2>
-    <p>Motherboard: $motherboard</p>
-    <p>CPU: $name ($logicalprocessors CPUs) ~ $maxClockSpeedGHz GHz</p>
-    <p>CPU Usage: $cpuUsage%</p>
-    <p>Memory: $(($memory.Sum / 1GB)) GB</p>
-    <p>GPU: $graphiccard</p>
-    <p>GPU Memory: $memoryValueGB GB</p>
-    <p>Drivers Version: $graphicversion</p>
-    <p>Resolution: $resolution</p>
-    <p>Battery Info: $batteryInfo</p>
-    <h2>Additional Information</h2>
-    <p>Development Environment: $developmentEnvironment</p>
-    <p>Disk Usage: Disk $disk.DeviceID - $diskTotalSpaceGB GB (Free: $diskFreeSpaceGB GB, Used: $diskUsedSpaceGB GB, Free: $diskFreePercentage%, Used: $diskUsedPercentage%)</p>
-    <p>ISP: $isp</p>
-    <p>Public IP Address: $ipAddres</p>
-    <p>MAC Address: $macAddress</p>
-    <p>Location: $location</p>
-    <p>Hostname: $hostname</p>
-    <p>Adapter Status: $adapterConnectionStatus</p>
-    <p>WiFi Info: $wifiInfo</p>
-    <h2>Security Information</h2>
-    <p>Firewall: $firewallname1</p>
-    <p>Status: $firewallstatusinfo</p>
-    <p>Antivirus: $antivirusname</p>
-    <p>Status: $antivirusstate</p>
-</body>
-</html>
-"@
-Set-Content -Path $reportPath -Value $reportContent
-
 Write-Host -NoNewline ("`e]9;4;0;50`a")
 Clear-Host
 
 # Mostrar la información con los logos
 Write-Host @"
 $systemLogo
-"@ -ForegroundColor $highlightColor
+"@ -ForegroundColor Blue
 
 # Formatear y mostrar la información a la derecha del logo
 Write-Host "-------------------------------------SOFTWARE-----------------------------------------------------" -ForegroundColor $highlightColor
@@ -358,4 +302,8 @@ Write-Host ("{0,-26} : {1}" -f 'Status', $firewallstatusinfo) -ForegroundColor $
 Write-Host ("{0,-26} : {1}" -f 'Antivirus', $antivirusname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Status', $antivirusstate) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host "System information report generated and save in {$reportPath}." -ForegroundColor $highlightColor
+Write-Host "----------------------------------------MESSAGE-----------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host ("{0,-16}" -f 'I Uploaded some new scripts to the repository to do new things like check and install Windows updates') -ForegroundColor Magenta
+Write-Host ("{0,-16}" -f 'Or a small script to check something about the security of your PC') -ForegroundColor Magenta
+Write-Host ("{0,-16}" -f 'Repository link: https://github.com/Nooch98/SysInfo') -ForegroundColor Magenta
+Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
