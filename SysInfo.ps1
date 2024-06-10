@@ -307,3 +307,5 @@ Write-Host ("{0,-16}" -f 'I Uploaded some new scripts to the repository to do ne
 Write-Host ("{0,-16}" -f 'Or a small script to check something about the security of your PC') -ForegroundColor Magenta
 Write-Host ("{0,-16}" -f 'Repository link: https://github.com/Nooch98/SysInfo') -ForegroundColor Magenta
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
+Write-Host "AUTHOR: Nooch98" -ForegroundColor Yellow
+
