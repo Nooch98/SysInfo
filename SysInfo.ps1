@@ -72,7 +72,6 @@ if ($currentversion -lt $latestversion) {
 }
 
 $powershellupdate = if ($updateNeeded) {
-    Write-Host "(UPDATE TO {$latestversion})"
 }
 
 # Obtener la resolución del monitor
