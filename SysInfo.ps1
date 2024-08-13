@@ -1,19 +1,113 @@
-$archivoLocal = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
-$archivoRemoto = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
-$url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
+# Version: 0.2.0
 
-Invoke-RestMethod -Uri $url -OutFile $archivoRemoto
-$hashLocal = Get-FileHash -Path $archivoLocal -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-$hashRemoto = Get-FileHash -Path $archivoRemoto -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-if ($hashLocal -eq $hashRemoto) {
-    Write-Host "You have the latest update installed..." -ForegroundColor Green
-    Remove-Item $archivoRemoto
+$localFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
+$remoteFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
+$configFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\config.json"
+$config = Get-Content $configFile | ConvertFrom-Json
+$url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
+$logFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\update_log.txt"
+
+
+function Prompt-User {
+    param (
+        [string]$message,
+        [string]$defaultOption = "Y"
+    )
+
+    $response = Read-Host "$message (Y/N) [Default: $defaultOption]"
+    if ([string]::IsNullOrEmpty($response)) {
+        $response = $defaultOption
+    }
+    return $response.ToUpper() -eq "Y"
+}
+
+# Read the current configuration for development mode
+$developmentMode = $false
+if (Test-Path $configFile) {
+    $config = Get-Content $configFile | ConvertFrom-Json
+    $developmentMode = $config.development_mode
+}
+
+$VerbosePreference = if ($developmentMode) { 'Continue' } else { 'SilentlyContinue' }
+
+# Ask if the user wants to change the development mode
+if (Prompt-User "The current mode is $(if ($developmentMode) { 'Development' } else { 'Production' }). Do you want to change it?") {
+    $developmentMode = -not $developmentMode
+    $config.development_mode = $developmentMode
+    $config | ConvertTo-Json | Set-Content $configFile
+    Write-Host "Mode changed to $(if ($developmentMode) { 'Development' } else { 'Production' })." -ForegroundColor Yellow
+}
+
+# Check if we're in a development environment
+if ($developmentMode) {
+    Write-Host "Development mode enabled. Skipping update check..." -ForegroundColor Yellow
 } else {
-    Write-Host "Installing the latest update..." -ForegroundColor Magenta
-    Remove-Item $archivoLocal
-    Move-Item $archivoRemoto $archivoLocal
-    & $archivoLocal
-    break
+    # Function to get script version
+    function Get-ScriptVersion {
+        param (
+            [string]$filePath
+        )
+
+        if (Test-Path $filePath) {
+            $content = Get-Content -Path $filePath -Raw
+            if ($content -match "# Version: (\d+\.\d+\.\d+)") {
+                return $matches[1]
+            }
+        }
+        return $null
+    }
+
+    # Function to download file with SSL certificate check
+    function Download-FileWithSSLCheck {
+        param (
+            [string]$url,
+            [string]$outputPath
+        )
+
+        try {
+            Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $outputPath -ErrorAction Stop
+            Write-Host "File downloaded successfully." -ForegroundColor Green
+        } catch {
+            Write-Host "Failed to download file. Error: $_" -ForegroundColor Red
+            exit
+        }
+    }
+
+    # Ask if the user wants to proceed with the update
+    if (Prompt-User "Do you want to check for updates?") {
+        # Download the remote file with error handling
+        Download-FileWithSSLCheck -url $url -outputPath $remoteFile
+
+        # Get versions
+        $localVersion = Get-ScriptVersion -filePath $localFile
+        $remoteVersion = Get-ScriptVersion -filePath $remoteFile
+
+        Write-Host "Current version: $localVersion"
+        Write-Host "New version: $remoteVersion"
+
+        # Compare versions
+        if ($localVersion -ne $null -and $remoteVersion -ne $null) {
+            if ($remoteVersion -gt $localVersion) {
+                Write-Host "New version is available. Updating script..." -ForegroundColor Green
+                Move-Item -Path $remoteFile -Destination $localFile -Force
+                "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - Script updated to version $remoteVersion" | Out-File -FilePath $logFile -Append
+                & $localFile
+            } else {
+                Write-Host "No update needed. Current script is up-to-date." -ForegroundColor Yellow
+                Remove-Item -Path $remoteFile
+            }
+        } else {
+            Write-Host "Failed to retrieve version information." -ForegroundColor Red
+            Remove-Item -Path $remoteFile
+        }
+    } else {
+        Write-Host "Update canceled by user." -ForegroundColor Yellow
+    }
+}
+
+if ($developmentMode) {
+    Write-Host "Development mode enabled. Verbose output will be shown." -ForegroundColor Yellow
+} else {
 }
 
 # Logo del sistema
@@ -39,12 +133,13 @@ $systemLogo = @"
 "@
 
 # Colores
-$foregroundColor = "cyan"
 $highlightColor = "Green"
+$foregroundColor = "Cyan"
 $errorColor = "Red"
 
 Write-Host -NoNewline ("`e]9;4;3;50`a")
 
+Write-Verbose "Attempting to get computer information"
 $computer = Get-ComputerInfo
 
 # Obtener información del sistema
@@ -162,7 +257,7 @@ $cpu | ForEach-Object {
     $maxClockSpeedGHz = [math]::round($cpu.MaxClockSpeed / 1000, 1)
 }
 $cpuLoad = Get-WmiObject Win32_Processor | Measure-Object -Property LoadPercentage -Average
-$cpuUsage = $cpuLoad.Average
+$cpuUsage = Get-CimInstance -ClassName Win32_Processor | Measure-Object -Property LoadPercentage -Average | Select-Object -ExpandProperty Average
 
 # Obtener información sobre parches de seguridad
 $securityPatches = Get-HotFix | Where-Object { $_.Description -eq "Security Update" }
@@ -234,6 +329,22 @@ if (Test-Path $dxdiagOutputFile) {
     Write-Host "The dxdiag file was not created within the expected time." -ForegroundColor $errorColor
 }
 
+# Function to get real-time GPU memory usage if possible (for NVIDIA GPUs)
+function Get-NvidiaGPUMemoryUsage {
+    try {
+        $nvidiaSmiPath = "c:\Windows\system32\nvidia-smi.exe"
+        if (Test-Path $nvidiaSmiPath) {
+            $output = & $nvidiaSmiPath --query-gpu=memory.used --format=csv,noheader,nounits
+            $gpuMemoryUsedMB = $output.Trim()
+            return "$gpuMemoryUsedMB MB used"
+        } else {
+            return "NVIDIA GPU not detected or 'nvidia-smi' not found."
+        }
+    } catch {
+        return "Error retrieving GPU memory usage: $_"
+    }
+}
+
 # Friewall status
 $firewall = Get-NetFirewallProfile
 $firewallname1 = $firewall.Name | Select-Object -First 1
@@ -243,6 +354,7 @@ $firewallstatusinfo = $firewall.Enabled | Select-Object -First 1
 $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct
 $antivirusname = $antivirus.displayName
 $antivirusstate = Get-Service -Name WinDefend | Select-Object -ExpandProperty Status
+$gpuuse = Get-NvidiaGPUMemoryUsage
 
 Write-Host -NoNewline ("`e]9;4;0;50`a")
 Clear-Host
@@ -275,6 +387,7 @@ Write-Host ("{0,-16} : {1}" -f 'CPU', "$name($logicalprocessors CPUs)~$maxClockS
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU', $graphiccard) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'GPU USE', $gpuuse) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $memoryValueGB + ' GB') -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Drivers Version', $graphicversion) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Resolution', $resolution) -ForegroundColor $foregroundColor
