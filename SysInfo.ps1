@@ -415,10 +415,10 @@ Write-Host ("{0,-26} : {1}" -f 'Antivirus', $antivirusname) -ForegroundColor $fo
 Write-Host ("{0,-26} : {1}" -f 'Status', $antivirusstate) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host "----------------------------------------UPDATE CHANGES-----------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host ("{0,-16}" -f 'I have added when starting the script the option to activate a developer mode so that if it is being modified and tested it does not run the search for updates and shows messages about what the script is doing') -ForegroundColor Magenta
-Write-Host ("{0,-16}" -f 'I have changed how updates are checked') -ForegroundColor Magenta
-Write-Host ("{0,-16}" -f 'Now the script will ask you if you want to update it (except if you are in development mode which will never be updated)') -ForegroundColor Magenta
-Write-Host ("{0,-16}" -f 'Add to also show the GPU usage') -ForegroundColor Magenta
+Write-Host ("{0,-16}" -f '* I have added when starting the script the option to activate a developer mode so that if it is being modified and tested it does not run the search for updates and shows messages about what the script is doing') -ForegroundColor Magenta
+Write-Host ("{0,-16}" -f '* I have changed how updates are checked') -ForegroundColor Magenta
+Write-Host ("{0,-16}" -f '* Now the script will ask you if you want to update it (except if you are in development mode which will never be updated)') -ForegroundColor Magenta
+Write-Host ("{0,-16}" -f '* Add to also show the GPU usage') -ForegroundColor Magenta
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host "AUTHOR: Nooch98" -ForegroundColor Yellow
 
