@@ -1,4 +1,4 @@
-# Version: 0.2.0
+# Version: 0.2.1
 
 $localFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
 $remoteFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
@@ -110,6 +110,16 @@ if ($developmentMode) {
 } else {
 }
 
+function Show-Popup {
+    param (
+        [string]$message,
+        [string]$title = "Last Update"
+    )
+
+    Add-Type -AssemblyName PresentationFramework
+    [System.Windows.MessageBox]::Show($message, $title, [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+}
+
 # Logo del sistema
 $systemLogo = @"
                                                       ....iilll
@@ -211,7 +221,7 @@ $isp = $ipAddress.org
 $location = $ipAddress.city
 $macAddress = $network.MACAddress[0]
 $hostname = $env:COMPUTERNAME
-$networkAdapters = Get-NetAdapter | Select-Object Name, Status, LinkSpeed
+$networkAdapters = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -and $_.Name -notlike '*VMware*' } | Select-Object Name, Status, MacAddress, LinkSpeed
 foreach ($adapter in $networkAdapters) {
 }
 
@@ -220,8 +230,9 @@ $wifi = Get-NetConnectionProfile
 $wifiInfo = if ($wifi) {
     $wifiinterface = $wifi.InterfaceAlias
     $wifiname = $wifi.Name
-    $wificonnectivity = $wifi.IPv6Connectivity
-    "SSID: $wifiname, Interface: $wifiinterface, Connectivity: $wificonnectivity"
+    $wificonnectivityIPv6 = $wifi.IPv6Connectivity
+    $wifiConnectivityipV4 = $wifi.IPv4Connectivity
+    "SSID: $wifiname, Interface: $wifiinterface, Connectivity IPv6: $wificonnectivityIPv6, connectivity IPv4: $wifiConnectivityipV4"
 } else {
     "WiFi not available"
 }
@@ -231,7 +242,8 @@ $battery = Get-WmiObject Win32_Battery
 $batteryInfo = if ($battery) {
     $batteryTimeRemaining = $battery.EstimatedRunTime
     $batteryStatus = $battery.Status
-    "Battery Level: $($battery.EstimatedChargeRemaining)%, Status: $batteryStatus"
+    $batteryID = $battery.DeviceID
+    "Battery Level: $($battery.EstimatedChargeRemaining)%, Status: $batteryStatus, ID: $batteryID"
 } else {
     "Battery not available"
 }
@@ -245,6 +257,8 @@ if ($Host.Name -eq "ConsoleHost") {
     $developmentEnvironment = "PowerShell Console"
 } elseif ($Host.Name -eq "Visual Studio Code Host") {
     $developmentEnvironment = "Visual Studio Code"
+} elseif ($Host.Name -eq "Python Host") {
+    $developmentEnvironment = "Python Console"
 } else {
     $developmentEnvironment = "Unknown Terminal"
 }
@@ -347,8 +361,11 @@ function Get-NvidiaGPUMemoryUsage {
 
 # Friewall status
 $firewall = Get-NetFirewallProfile
-$firewallname1 = $firewall.Name | Select-Object -First 1
-$firewallstatusinfo = $firewall.Enabled | Select-Object -First 1
+$firewallStatus = @()
+foreach ($profile in $firewall) {
+    $firewallStatus += "$($profile.Name): $($profile.Enabled)"
+}
+$firewallname = $firewallStatus -join ', '
 
 # Antivirus info
 $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVirusProduct
@@ -404,21 +421,22 @@ Write-Host ("{0,-26} : {1}" -f 'Pubilc IP Address', $ipAddres) -ForegroundColor 
 Write-Host ("{0,-26} : {1}" -f 'MAC Address', $macAddress) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Location', $location) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Hostname', $hostname) -ForegroundColor $foregroundColor
-Write-Host ("Adapter                    : {0}, Status: {1}, Speed: {2}" -f $adapter.Name, $adapter.Status, $adapter.LinkSpeed) -ForegroundColor $foregroundColor
+Write-Host ("Adapter                    : {0}, Status: {1}, mac: {2}, Speed: {3}" -f $adapter.Name, $adapter.Status, $adapter.MacAddress, $adapter.LinkSpeed) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'WiFi Info', $wifiInfo) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
 Write-Host "-------------------------------------SECURITY INFO--------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host ("{0,-26} : {1}" -f 'Firewall', $firewallname1) -ForegroundColor $foregroundColor
-Write-Host ("{0,-26} : {1}" -f 'Status', $firewallstatusinfo) -ForegroundColor $foregroundColor
+Write-Host ("{0,-26} : {1}" -f 'Firewall', $firewallname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Antivirus', $antivirusname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Status', $antivirusstate) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host "----------------------------------------UPDATE CHANGES-----------------------------------------------------" -ForegroundColor $highlightColor
-Write-Host ("{0,-16}" -f '* I have added when starting the script the option to activate a developer mode so that if it is being modified and tested it does not run the search for updates and shows messages about what the script is doing') -ForegroundColor Magenta
-Write-Host ("{0,-16}" -f '* I have changed how updates are checked') -ForegroundColor Magenta
-Write-Host ("{0,-16}" -f '* Now the script will ask you if you want to update it (except if you are in development mode which will never be updated)') -ForegroundColor Magenta
-Write-Host ("{0,-16}" -f '* Add to also show the GPU usage') -ForegroundColor Magenta
-Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
+# Definimos los cambios en una variable
+$updates = @"
+Updates 0.2.1:
+- Add to show a popup when updates are available
+- Change how is show the firewall info
+- Change how is recolect and show the network adapter info
+- Agree new info in Battery Info now is show the ID of the battery
+"@
 Write-Host "AUTHOR: Nooch98" -ForegroundColor Yellow
-
+Show-Popup -message $updates
