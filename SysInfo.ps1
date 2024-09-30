@@ -16,6 +16,16 @@ Updates 0.2.1:
 - Agree new info in Battery Info now is show the ID of the battery
 "@
 
+function Show-Popup {
+    param (
+        [string]$message,
+        [string]$title = "Last Update"
+    )
+
+    Add-Type -AssemblyName PresentationFramework
+    [System.Windows.MessageBox]::Show($message, $title, [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+}
+
 function Prompt-User {
     param (
         [string]$message,
@@ -117,16 +127,6 @@ if ($developmentMode) {
 if ($developmentMode) {
     Write-Host "Development mode enabled. Verbose output will be shown." -ForegroundColor Yellow
 } else {
-}
-
-function Show-Popup {
-    param (
-        [string]$message,
-        [string]$title = "Last Update"
-    )
-
-    Add-Type -AssemblyName PresentationFramework
-    [System.Windows.MessageBox]::Show($message, $title, [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
 }
 
 # Logo del sistema
