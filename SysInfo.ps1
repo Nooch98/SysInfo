@@ -7,6 +7,14 @@ $config = Get-Content $configFile | ConvertFrom-Json
 $url = "https://raw.githubusercontent.com/Nooch98/SysInfo/main/SysInfo.ps1"
 $logFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\update_log.txt"
 
+# Definimos los cambios en una variable
+$updates = @"
+Updates 0.2.1:
+- Add to show a popup when updates are available
+- Change how is show the firewall info
+- Change how is recolect and show the network adapter info
+- Agree new info in Battery Info now is show the ID of the battery
+"@
 
 function Prompt-User {
     param (
@@ -91,7 +99,6 @@ if ($developmentMode) {
                 Write-Host "New version is available. Updating script..." -ForegroundColor Green
                 Move-Item -Path $remoteFile -Destination $localFile -Force
                 "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - Script updated to version $remoteVersion" | Out-File -FilePath $logFile -Append
-                Show-Popup -message $updates
                 & $localFile
             } else {
                 Write-Host "No update needed. Current script is up-to-date." -ForegroundColor Yellow
@@ -431,12 +438,4 @@ Write-Host ("{0,-26} : {1}" -f 'Firewall', $firewallname) -ForegroundColor $fore
 Write-Host ("{0,-26} : {1}" -f 'Antivirus', $antivirusname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Status', $antivirusstate) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
-# Definimos los cambios en una variable
-$updates = @"
-Updates 0.2.1:
-- Add to show a popup when updates are available
-- Change how is show the firewall info
-- Change how is recolect and show the network adapter info
-- Agree new info in Battery Info now is show the ID of the battery
-"@
 Write-Host "AUTHOR: Nooch98" -ForegroundColor Yellow
