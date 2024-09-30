@@ -91,6 +91,7 @@ if ($developmentMode) {
                 Write-Host "New version is available. Updating script..." -ForegroundColor Green
                 Move-Item -Path $remoteFile -Destination $localFile -Force
                 "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - Script updated to version $remoteVersion" | Out-File -FilePath $logFile -Append
+                Show-Popup -message $updates
                 & $localFile
             } else {
                 Write-Host "No update needed. Current script is up-to-date." -ForegroundColor Yellow
@@ -439,4 +440,3 @@ Updates 0.2.1:
 - Agree new info in Battery Info now is show the ID of the battery
 "@
 Write-Host "AUTHOR: Nooch98" -ForegroundColor Yellow
-Show-Popup -message $updates
