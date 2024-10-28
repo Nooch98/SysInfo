@@ -1,4 +1,4 @@
-# Version: 0.2.1
+# Version: 0.2.2
 
 $localFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
 $remoteFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
@@ -9,11 +9,8 @@ $logFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\update_log.txt"
 
 # Definimos los cambios en una variable
 $updates = @"
-Updates 0.2.1:
-- Add to show a popup when updates are available
-- Change how is show the firewall info
-- Change how is recolect and show the network adapter info
-- Agree new info in Battery Info now is show the ID of the battery
+Updates 0.2.2:
+- Add Energy plan in use
 "@
 
 function Show-Popup {
@@ -131,24 +128,18 @@ if ($developmentMode) {
 
 # Logo del sistema
 $systemLogo = @"
-                                                      ....iilll
-                                            ....iilllllllllllll
-                                ....iillll  lllllllllllllllllll
-                            iillllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                            llllllllllllll  lllllllllllllllllll
-                             `^^^^^^lllllll  lllllllllllllllllll
-                                    ````^^^^  ^^lllllllllllllllll
-                                                   ````^^^^^^llll                
+                            ┌─────────────┬─────────────┐
+                            │             │             │
+                            │             │             │
+                            │             │             │
+                            │             │             │
+                            ├─────────────┼─────────────┤
+                            │             │             │
+                            │             │             │
+                            │             │             │
+                            │             │             │
+                            └─────────────┴─────────────┘
+           
 "@
 
 # Colores
@@ -344,6 +335,31 @@ if (Test-Path $dxdiagOutputFile) {
         }
     } else {
         Write-Host "The 'Dedicated Memory' line was not found in the dxdiag file." -ForegroundColor $errorColor
+        $gpuNameLines = Select-String -Path $dxdiagOutputFile -Pattern "Card name|Display Memory"
+
+        if ($gpuNameLines.Count -gt 0) {
+            $gpuLine = $gpuNameLines[0].Line
+
+            if ($gpuLine -match "Card name") {
+                $gpuName = $gpuLine -replace "Card name: ", ""
+            }
+
+            if ($gpuLine -match "Display Memory") {
+                # Extraer el valor de memoria de video (para tarjetas no NVIDIA)
+                $memoryValueMatch = [regex]::Match($gpuLine, '(\d+)')
+
+                if ($memoryValueMatch.Success) {
+                    $memoryValueMB = [int]$memoryValueMatch.Value  # Convertir a entero
+
+                    # Convertir de MB a GB
+                    $memoryValueGB = [math]::Round($memoryValueMB / 1024, 2)  # Redondear a 2 decimales
+
+                    Write-Host "Detected Display Memory: $memoryValueGB GB" -ForegroundColor $infoColor
+                } else {
+                    Write-Host "The value of display memory could not be extracted from the line: $gpuLine." -ForegroundColor $errorColor
+                }
+            }
+        }
     }
 
     # Eliminar el archivo temporal
@@ -368,6 +384,15 @@ function Get-NvidiaGPUMemoryUsage {
     }
 }
 
+function control_users {
+    $uac = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA"
+    if ($uac.EnabledLUA -eq 1) {
+        $uac1 = Write-Host ("{0,-26} : {1}" -f 'UAC Status', 'Enable') -ForegroundColor $foregroundColor
+    } else {
+        $uac2 = Write-Host ("{0,-26} : {1}" -f 'UAC Status', 'Disable') -ForegroundColor $foregroundColor
+    }
+}
+
 # Friewall status
 $firewall = Get-NetFirewallProfile
 $firewallStatus = @()
@@ -381,6 +406,11 @@ $antivirus = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName AntiVi
 $antivirusname = $antivirus.displayName
 $antivirusstate = Get-Service -Name WinDefend | Select-Object -ExpandProperty Status
 $gpuuse = Get-NvidiaGPUMemoryUsage
+$processes = Get-Process | Sort-Object CPU -Descending | Select-Object -First 10 Name, CPU, WS
+$eventLogs = Get-EventLog -LogName Application -Newest 10
+$powerPlan = powercfg /getactivescheme
+$powerPlanName = $powerPlan -replace '.*\((.*?)\).*', '$1'
+$runningServicesCount = (Get-Service | Where-Object { $_.Status -eq 'Running' }).Count
 
 Write-Host -NoNewline ("`e]9;4;0;50`a")
 Clear-Host
@@ -407,10 +437,12 @@ Write-Host ("{0,-16} : {1}" -f 'Bios version', $biosversion) -ForegroundColor $f
 Write-Host ("{0,-16} : {1}" -f 'Bios Type', $biostipe) -ForegroundColor $foregroundColor
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
+# Mostrar informacion del Hardware
 Write-Host "--------------------------------------HARDWARE-----------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-16} : {1}" -f 'Motherboard', $motherboard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'CPU', "$name($logicalprocessors CPUs)~$maxClockSpeedGHz GHz") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1} GB" -f "$($disk.DeviceID)","Free Space $diskFreeSpaceGB") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU', $graphiccard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU USE', $gpuuse) -ForegroundColor $foregroundColor
@@ -418,12 +450,14 @@ Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $memoryValueGB + ' GB') -Foreground
 Write-Host ("{0,-16} : {1}" -f 'Drivers Version', $graphicversion) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Resolution', $resolution) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'Battery Info', $batteryInfo) -ForegroundColor $foregroundColor
+Write-Host ("{0,-16} : {1}" -f 'Energy Plan', $powerPlanName) -ForegroundColor $foregroundColor
 Write-Host "---------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
 # Mostrar la información adicional
 Write-Host "-------------------------------------ADITIONAL INFO------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-26} : {1}" -f 'Development Environment', $developmentEnvironment, $currentTerminal) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'PowerShell Update', $currentversion + $powershellupdate) -ForegroundColor $foregroundColor
+Write-Host ("{0,-26} : {1}" -f 'Process Running', $runningServicesCount) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1} GB (Free: {2} GB, Used: {3} GB, Free: {4}%, Used: {5}%)" -f ('Disk ' + $disk.DeviceID), $diskTotalSpaceGB, $diskFreeSpaceGB, $diskUsedSpaceGB, $diskFreePercentage, $diskUsedPercentage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'ISP', $isp) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Pubilc IP Address', $ipAddres) -ForegroundColor $foregroundColor
@@ -434,9 +468,11 @@ Write-Host ("Adapter                    : {0}, Status: {1}, mac: {2}, Speed: {3}
 Write-Host ("{0,-26} : {1}" -f 'WiFi Info', $wifiInfo) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
+# Mostrar informacion de seguridad
 Write-Host "-------------------------------------SECURITY INFO--------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host ("{0,-26} : {1}" -f 'Firewall', $firewallname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Antivirus', $antivirusname) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Status', $antivirusstate) -ForegroundColor $foregroundColor
+control_users
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 Write-Host "AUTHOR: Nooch98" -ForegroundColor Yellow
