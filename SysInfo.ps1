@@ -1,4 +1,4 @@
-# Version: 0.2.2
+# Version: 0.2.3
 
 $localFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo.ps1"
 $remoteFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\Sysinfo_temp.ps1"
