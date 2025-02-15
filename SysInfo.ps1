@@ -9,8 +9,10 @@ $logFile = "$env:USERPROFILE\Documents\PowerShell\Scripts\update_log.txt"
 
 # Definimos los cambios en una variable
 $updates = @"
-Updates 0.2.2:
-- Add Energy plan in use
+Updates 0.2.3:
+- Integrated extended network info, driver verification and disk SMART status into the Additional Info section
+- Virtual machine and hyper-v detection
+- Detailed ram memory detection
 "@
 
 function Show-Popup {
@@ -411,6 +413,57 @@ $eventLogs = Get-EventLog -LogName Application -Newest 10
 $powerPlan = powercfg /getactivescheme
 $powerPlanName = $powerPlan -replace '.*\((.*?)\).*', '$1'
 $runningServicesCount = (Get-Service | Where-Object { $_.Status -eq 'Running' }).Count
+function ping {
+  $ping = Test-NetConnection -ComputerName google.com -WarningAction SilentlyContinue
+  if ($ping.PingSucceeded) {
+    $ping1 = Write-Host ("{0,-26} : {1}" -f 'Network Status', 'OK') -ForegroundColor $foregroundColor
+  } else {
+    $ping2 = Write-Host ("{0,-26} : {1}" -f 'Network Status', 'Failed') -ForegroundColor $foregroundColor
+  }
+}
+$SystemInfo = @{}
+$virtualizationSupport = Get-CimInstance -ClassName Win32_Processor | Select-Object -ExpandProperty VirtualizationFirmwareEnabled
+$hyperV = Get-WindowsOptionalFeature -Online | Where-Object { $_.FeatureName -like "Microsoft-Hyper-V-All" }
+$SystemInfo["Virtualization in firmware"] = if ($virtualizationSupport) { "Enabled" } else { "Disable" }
+$SystemInfo["Hyper-V"] = if ($hyperV -and $hyperV.State -eq "Enabled") { "Installed and enabled" } else { "Not Installed and Disabled" }
+$vmCheck = Get-CimInstance -Class Win32_ComputerSystem
+$vmManufacturer = $vmCheck.Manufacturer
+$vmModel = $vmCheck.Model
+$SystemInfo["Machine Tipe"] = if ($vmManufacturer -match "VMware|Virtual|Hyper|KVM|QEMU") { 
+    "Virtual ($vmManufacturer - $vmModel)" 
+} else { 
+    "Físic" 
+}
+$memoryModules = Get-CimInstance Win32_PhysicalMemory | Select-Object Manufacturer, PartNumber, Capacity, Speed, FormFactor, SerialNumber
+$memoryFormFactor = @{
+    0  = "Desconocido"
+    1  = "Otro"
+    2  = "SIP"
+    3  = "DIP"
+    4  = "ZIP"
+    5  = "SOJ"
+    6  = "Propietario"
+    7  = "SIMM"
+    8  = "DIMM"
+    9  = "TSOP"
+    10 = "PGA"
+    11 = "RIMM"
+    12 = "SODIMM"
+    13 = "SRIMM"
+    14 = "FB-DIMM"
+}
+$MemoryDetails = @()
+foreach ($module in $memoryModules) {
+    $MemoryDetails += "Fabricante: $($module.Manufacturer) | Model: $($module.PartNumber) | Capacity: {0} GB | Velocity: {1} MHz | Tipe: {2} | Serial: $($module.SerialNumber)" -f ([math]::Round($module.Capacity / 1GB, 2)), $module.Speed, $memoryFormFactor[$module.FormFactor]
+}
+
+if ($MemoryDetails.Count -eq 0) {
+    $MemoryDetails = "No modules detected."
+}
+
+$SystemInfo["Details of RAM"] = $MemoryDetails -join "`n"
+$driverCount = (Get-WmiObject Win32_PnPSignedDriver).Count
+$diskSMART = Get-PhysicalDisk | ForEach-Object { "$($_.DeviceID) [$($_.MediaType)]: $($_.HealthStatus), $($_.OperationalStatus), Size: $([math]::Round($_.Size/1GB,2)) GB" } -join " | "
 
 Write-Host -NoNewline ("`e]9;4;0;50`a")
 Clear-Host
@@ -444,6 +497,9 @@ Write-Host ("{0,-16} : {1}" -f 'CPU', "$name($logicalprocessors CPUs)~$maxClockS
 Write-Host ("{0,-16} : {1}%" -f 'CPU Usage', $cpuUsage) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1} GB" -f "$($disk.DeviceID)","Free Space $diskFreeSpaceGB") -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1} GB" -f 'Memory', ($memory.Sum / 1GB)) -ForegroundColor $foregroundColor
+foreach ($key in $SystemInfo.Keys) {
+    Write-Host ("{0,-16} : {1}" -f $key, $SystemInfo[$key]) -ForegroundColor $foregroundColor
+}
 Write-Host ("{0,-16} : {1}" -f 'GPU', $graphiccard) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU USE', $gpuuse) -ForegroundColor $foregroundColor
 Write-Host ("{0,-16} : {1}" -f 'GPU Memory', $memoryValueGB + ' GB') -ForegroundColor $foregroundColor
@@ -459,6 +515,8 @@ Write-Host ("{0,-26} : {1}" -f 'Development Environment', $developmentEnvironmen
 Write-Host ("{0,-26} : {1}" -f 'PowerShell Update', $currentversion + $powershellupdate) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Process Running', $runningServicesCount) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1} GB (Free: {2} GB, Used: {3} GB, Free: {4}%, Used: {5}%)" -f ('Disk ' + $disk.DeviceID), $diskTotalSpaceGB, $diskFreeSpaceGB, $diskUsedSpaceGB, $diskFreePercentage, $diskUsedPercentage) -ForegroundColor $foregroundColor
+Write-Host ("{0,-26} : {1}" -f 'Disk SMART', $diskSMART) -ForegroundColor $foregroundColor
+ping
 Write-Host ("{0,-26} : {1}" -f 'ISP', $isp) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'Pubilc IP Address', $ipAddres) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'MAC Address', $macAddress) -ForegroundColor $foregroundColor
@@ -466,6 +524,31 @@ Write-Host ("{0,-26} : {1}" -f 'Location', $location) -ForegroundColor $foregrou
 Write-Host ("{0,-26} : {1}" -f 'Hostname', $hostname) -ForegroundColor $foregroundColor
 Write-Host ("Adapter                    : {0}, Status: {1}, mac: {2}, Speed: {3}" -f $adapter.Name, $adapter.Status, $adapter.MacAddress, $adapter.LinkSpeed) -ForegroundColor $foregroundColor
 Write-Host ("{0,-26} : {1}" -f 'WiFi Info', $wifiInfo) -ForegroundColor $foregroundColor
+# Integración de la información extendida de IPs en Additional Info, asignando un color único a cada adaptador
+Write-Host ("{0,-26} : " -f 'Ext. IP Configs') -NoNewline -ForegroundColor $foregroundColor
+
+# Obtiene todas las configuraciones con direcciones IPv4
+$netConfigs = Get-NetIPConfiguration | Where-Object { $_.IPv4Address }
+
+# Lista de colores para asignar a cada adaptador (se reciclará si hay más adaptadores que colores)
+$colors = @("Green", "Cyan", "Magenta", "Yellow", "Blue", "Red", "DarkGray", "DarkCyan")
+$adapterIndex = 0
+
+foreach ($config in $netConfigs) {
+    # Asigna el color según el índice actual
+    $adapterColor = $colors[$adapterIndex % $colors.Count]
+    $adapterIndex++
+
+    # Muestra el alias de la interfaz, las IPs y los DNS con el color asignado
+    Write-Host ("[Interface: $($config.InterfaceAlias)] ") -NoNewline -ForegroundColor $adapterColor
+    $ips = ($config.IPv4Address | ForEach-Object { $_.IPAddress }) -join ", "
+    Write-Host ("IP: $ips ") -NoNewline -ForegroundColor $adapterColor
+    $dns = if ($config.DNSServer) { $config.DNSServer.ServerAddresses -join ", " } else { "N/A" }
+    Write-Host ("(DNS: $dns) ") -NoNewline -ForegroundColor $adapterColor
+    Write-Host "| " -NoNewline -ForegroundColor $foregroundColor
+}
+Write-Host ""
+Write-Host ("{0,-26} : {1}" -f 'Driver Count', $driverCount) -ForegroundColor $foregroundColor
 Write-Host "----------------------------------------------------------------------------------------------------" -ForegroundColor $highlightColor
 
 # Mostrar informacion de seguridad
